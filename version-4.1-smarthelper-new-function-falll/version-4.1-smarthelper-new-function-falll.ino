@@ -9,21 +9,6 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
-///////////////////INTERRUPT///////////////////////
-
-#include <Ticker.h>
-//timer dividers
-#define TIM_DIV1  0 //80MHz (80 ticks/us - 104857.588 us max)
-#define TIM_DIV16 1 //5MHz (5 ticks/us - 1677721.4 us max)
-#define TIM_DIV265  3 //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
-//timer int_types
-#define TIM_EDGE  0
-#define TIM_LEVEL 1
-//timer reload values
-#define TIM_SINGLE  0 //on interrupt routine you need to write a new value to start the timer again
-#define TIM_LOOP  1 //on interrupt the counter will start with the same value again
-
-//////////////////INTERRUPT////////////////////////////////
 
 //IMU
 MPU6050 accelgyro;
@@ -120,13 +105,19 @@ const char *ssid = ALIAS;
 const char *password = "";
 
 
+
 WiFiClient client;
+
+// ThingSpeak Settings //
+char thingSpeakAddress[] = "api.thingspeak.com";
+String writeAPIKey = "2TMDRASPYKMA8KRF";
+WiFiClient client2;
+// ThingSpeak Settings //
+
 String uid = "";
 MicroGear microgear(client);
 
-void ICACHE_RAM_ATTR onTimerISR(){
-    
-}
+
 
 void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
   Serial.print("Incoming message -->");
@@ -164,20 +155,40 @@ void read_battery_milsec(unsigned long t , int pin) {
   timerBat = millis();
   if (timerBat - preTimeBat > t) {
     sensorValue = analogRead( battery_adc);
-    if (sensorValue < 837 ) {//น้อยกว่า3.5V จะเตือน//837
-      Serial.print("case1 : ");
-      Serial.println(sensorValue);//*3.3/1024
-      toggleLEDBat = true;
-      preTimeBat = timerBat;
-      digitalWrite(pin, HIGH);
-      send_json("CHECK", "LOW");
-    } else {
-      Serial.print("case2 : ");
-      Serial.println(sensorValue);//*3.3/1024
-      toggleLEDBat = false;
-      preTimeBat = timerBat;
-      digitalWrite(pin, LOW);
+
+    Serial.println("Bat test");
+    sensorValue = analogRead(battery_adc);
+    String rawdata = (String) sensorValue;
+
+    String data = "field1=" + rawdata ;
+
+    if (client2.connect(thingSpeakAddress, 80)) {
+      client2.print("POST /update HTTP/1.1\n");
+      client2.print("Host: api.thingspeak.com\n");
+      client2.print("Connection: close\n");
+      client2.print("X-THINGSPEAKAPIKEY: " + writeAPIKey + "\n");
+      client2.print("Content-Type: application/x-www-form-urlencoded\n");
+      client2.print("Content-Length: ");
+      client2.print(data.length());
+      client2.print("\n\n");
+      client2.print(data);
     }
+    preTimeBat = timerBat;
+
+    //    if (sensorValue < 837 ) {//น้อยกว่า3.5V จะเตือน//837
+    //      Serial.print("case1 : ");
+    //      Serial.println(sensorValue);//*3.3/1024
+    //      toggleLEDBat = true;
+    //      preTimeBat = timerBat;
+    //      digitalWrite(pin, HIGH);
+    //      send_json("CHECK", "LOW");
+    //    } else {
+    //      Serial.print("case2 : ");
+    //      Serial.println(sensorValue);//*3.3/1024
+    //      toggleLEDBat = false;
+    //      preTimeBat = timerBat;
+    //      digitalWrite(pin, LOW);
+    //    }
   }
 }
 //tongลบ
@@ -286,7 +297,6 @@ void wifi() {
 
       } else {
         wifilist += "<span class='q l'>";
-
       }
       int quality = (2 * (WiFi.RSSI(i) + 100));
       if (quality > 100) {
@@ -427,7 +437,7 @@ void setup_wifi() {
   WiFi.softAPdisconnect(true);
   Serial.println("Starting in STA mode");
   WiFi.mode(WIFI_STA);
- 
+
   for (int j = 0 ; j < 4 ; j++) {
     if (WiFi.status() != WL_CONNECTED) {
       current_ssid = ssid_list[j];
@@ -744,7 +754,7 @@ void doInt()
 }
 
 void checkSettingsMPU()
-{ 
+{
   Serial.println();
 
   Serial.print(" * Sleep Mode:                ");
@@ -839,12 +849,17 @@ void setup() {
   microgear.on(MESSAGE, onMsghandler);
   microgear.on(CONNECTED, onConnected);
 
+  //  timer1_disable();
+  //  timer1_attachInterrupt(onTimerISR);
+  //  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
+  //  timer1_write(300000000); //120000 us
+
   Serial.begin(115200);
 
   //#####initialize IMU MPU6050#####
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-  //Wire.begin(5, 4);//New version
-  Wire.begin(); //Old version
+  Wire.begin(5, 4);//New version
+  //Wire.begin(); //Old version
 #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
   Fastwire::setup(400, true);
 #endif
@@ -893,15 +908,14 @@ void setup() {
 
   //#####End initialize input/output#####
 
-  
-    
+
+
   prepareFile();//SSID PASS File
   //?pinMode(vibration_motor, INPUT);
 
-//  timer1_attachInterrupt(onTimerISR);
-//  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
-//  timer1_write(300000000); //120000 us
-  
+
+
+
   beep(50);
   beep(50);
   timeOut = millis();
@@ -919,7 +933,7 @@ void loop() {
     1                | กดปุ่ม4วินาที         | AP mode
     2                | ไม่มีการกดปุ่ม       | Normal mode
     #######################################################*/
-    
+
   if (pre_program_mode == 0) {
     if (((timer - timeOut) / 1000) < 10) {
       if (buttonState == HIGH) {
@@ -961,6 +975,10 @@ void loop() {
     delay(250);
   }
   if (pre_program_mode == 2) {
+
+
+
+
     if (start_ap == 1) {
       start_ap = 0;
       digitalWrite(battery_led , LOW );
@@ -990,6 +1008,8 @@ void loop() {
     }
     //microgear connect
     microgear.loop();
+
+
 
     //WiFi.forceSleepBegin(0);
     // toggle_battery_led(1000, battery_led); // led on pin12 battery
@@ -1024,7 +1044,6 @@ void loop() {
         pinMode( vibration_motor, INPUT);
         delay(500);
 
-        //
         if (buttonState == HIGH) {
           unsigned long timerAck = ((timer - preTime) / 1000);
           if ( timerAck >= 1.0) {
@@ -1074,9 +1093,7 @@ void loop() {
       if (buttonState == HIGH) {
 
       } else {
-        //String fullinfo = "Firstname : " + firstname + "\nLastname : " + lastname + "\nMore Information : app.midatdb.com/PFrCbTJd2J";
         DETECT = "PRESS";
-        //send_json("HELP","PRESS");
         state = 2;
       }
     } else if (state == 4) {
@@ -1097,5 +1114,6 @@ void loop() {
         state = 0;
       }
     }
+    read_battery_milsec(60000 , 12);
   }
 }
