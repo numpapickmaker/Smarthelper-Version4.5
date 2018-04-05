@@ -9,6 +9,22 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
+///////////////////INTERRUPT///////////////////////
+
+#include <Ticker.h>
+//timer dividers
+#define TIM_DIV1  0 //80MHz (80 ticks/us - 104857.588 us max)
+#define TIM_DIV16 1 //5MHz (5 ticks/us - 1677721.4 us max)
+#define TIM_DIV265  3 //312.5Khz (1 tick = 3.2us - 26843542.4 us max)
+//timer int_types
+#define TIM_EDGE  0
+#define TIM_LEVEL 1
+//timer reload values
+#define TIM_SINGLE  0 //on interrupt routine you need to write a new value to start the timer again
+#define TIM_LOOP  1 //on interrupt the counter will start with the same value again
+
+//////////////////INTERRUPT////////////////////////////////
+
 //IMU
 MPU6050 accelgyro;
 const uint8_t scl = D1;
@@ -107,6 +123,10 @@ const char *password = "";
 WiFiClient client;
 String uid = "";
 MicroGear microgear(client);
+
+void ICACHE_RAM_ATTR onTimerISR(){
+    
+}
 
 void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
   Serial.print("Incoming message -->");
@@ -213,6 +233,7 @@ void wifi_sleep(unsigned long t) {
     }
   }
 }
+
 void wifi_wakeup() {
   WiFi.forceSleepWake();
   // setup_wifi();
@@ -406,12 +427,7 @@ void setup_wifi() {
   WiFi.softAPdisconnect(true);
   Serial.println("Starting in STA mode");
   WiFi.mode(WIFI_STA);
-  /*WiFi.begin("chatsada", "159357123");
-    while (WiFi.status() != WL_CONNECTED) {                 // Wait for connection
-    delay(500);
-    Serial.print(".");
-    //  SendChar('.');
-    }*/
+ 
   for (int j = 0 ; j < 4 ; j++) {
     if (WiFi.status() != WL_CONNECTED) {
       current_ssid = ssid_list[j];
@@ -643,7 +659,7 @@ void setup_apmode() {
   server.on("/", web_page   );
   server.on("/i", info   );
   server.on("/r", reset);
-  server.on("/wifisave", handle_msg);                
+  server.on("/wifisave", handle_msg);
   server.on("/wifi", wifi);                          // And as regular external functions:
   server.onNotFound(handleNotFound);
   server.begin();                                    // Start the server
@@ -724,13 +740,11 @@ void send_json(String data, String MSG) {
 
 void doInt()
 {
-  Serial.println("FALL Interupt !!!!!!!!!!!!");
-  delay(1000);
   state = 1;
 }
 
 void checkSettingsMPU()
-{
+{ 
   Serial.println();
 
   Serial.print(" * Sleep Mode:                ");
@@ -829,8 +843,8 @@ void setup() {
 
   //#####initialize IMU MPU6050#####
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-  Wire.begin(5, 4);//New version
-  //Wire.begin(); //Old version
+  //Wire.begin(5, 4);//New version
+  Wire.begin(); //Old version
 #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
   Fastwire::setup(400, true);
 #endif
@@ -879,9 +893,15 @@ void setup() {
 
   //#####End initialize input/output#####
 
-
+  
+    
   prepareFile();//SSID PASS File
   //?pinMode(vibration_motor, INPUT);
+
+//  timer1_attachInterrupt(onTimerISR);
+//  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP);
+//  timer1_write(300000000); //120000 us
+  
   beep(50);
   beep(50);
   timeOut = millis();
@@ -891,16 +911,15 @@ void setup() {
 void loop() {
   timer = millis();
   buttonState = digitalRead(confirm_button);
-    /** 
-     #######################################################
-     ทำงานหลังจากเครื่องพร้อมใช้งาน 10 วินาที
-     pre_program_mode | เปลี่ยนเมื่อ           | เข้าสู่โหมด
-     -----------------+--------------------
-     0                | defualt           |    -
-     1                | กดปุ่ม4วินาที         | AP mode 
-     2                | ไม่มีการกดปุ่ม       | Normal mode
-     #######################################################
-    **/
+  /*#######################################################
+    ทำงานหลังจากเครื่องพร้อมใช้งาน 10 วินาที
+    pre_program_mode | เปลี่ยนเมื่อ           | เข้าสู่โหมด
+    -----------------+--------------------
+    0                | defualt           |    -
+    1                | กดปุ่ม4วินาที         | AP mode
+    2                | ไม่มีการกดปุ่ม       | Normal mode
+    #######################################################*/
+    
   if (pre_program_mode == 0) {
     if (((timer - timeOut) / 1000) < 10) {
       if (buttonState == HIGH) {
@@ -915,7 +934,7 @@ void loop() {
     } else {
       pre_program_mode = 2;
     }
-    
+
     digitalWrite(emergency_led, HIGH );
     digitalWrite(battery_led, HIGH  );
   }
@@ -933,7 +952,6 @@ void loop() {
     }
     dnsServer.processNextRequest();
     server.handleClient();
-    read_battery_milsec(5 * 60000, battery_led); //อ่านทุกๆ nวิ
 
     digitalWrite(emergency_led, HIGH  );
     //digitalWrite(  wifi_led, HIGH );
@@ -954,41 +972,36 @@ void loop() {
 
       microgear.init(KEY, SECRET, ALIAS);
       microgear.connect(APPID);
-      check_battery(battery_led);
-
+      //?
       if (reset_pass == "1") {
         send_json("RESET", "Password has been change");
         reset_pass = "0";
         handle_msg();
         Serial.println("--------------------------- password reset----------------------------");
       }
+      //?
     }
     // wifi check disconnect
-    /*if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED) {
       setup_wifi();
       microgear.init(KEY, SECRET, ALIAS);
       microgear.connect(APPID);
       microgear.loop();
-      Serial.println("wifi disconnect");
-      }*/
+    }
     //microgear connect
     microgear.loop();
-    check_status(60 * 60000);
-    read_battery_milsec(5 * 60000, battery_led); //อ่านทุกๆ nวิ
 
     //WiFi.forceSleepBegin(0);
     // toggle_battery_led(1000, battery_led); // led on pin12 battery
     if (state == 0) {
       //Serial.println("state 0");
-      wifi_sleep(20 * 60000);
+      //wifi_sleep(20 * 60000);
       // buttonState = digitalRead(buttonPin);
 
       if (buttonState == HIGH) {
         unsigned long timerAck = ((timer - preTime) / 1000);
-        wifi_wakeup();
-        if ( timerAck >= 0.0) {
-          Serial.println("I got some problem at state 0");
-          delay(50);
+        //wifi_wakeup();
+        if ( timerAck >= 1.0) {
           digitalWrite(emergency_led, HIGH);
           state = 3; //
 
@@ -1002,7 +1015,7 @@ void loop() {
       Serial.println((timer - timeOut) / 1000);
       buttonState = digitalRead(confirm_button);
 
-      if (((timer - timeOut) / 1000) < 8) {
+      if (((timer - timeOut) / 1000) <= 8) {
         digitalWrite(emergency_led, LOW);
         pinMode(vibration_motor , OUTPUT);
         digitalWrite(vibration_motor , LOW);
@@ -1011,10 +1024,10 @@ void loop() {
         pinMode( vibration_motor, INPUT);
         delay(500);
 
+        //
         if (buttonState == HIGH) {
           unsigned long timerAck = ((timer - preTime) / 1000);
-          if ( timerAck >= 1) {
-            Serial.println("no problem ");
+          if ( timerAck >= 1.0) {
             digitalWrite(emergency_led, LOW);
             digitalWrite(vibration_motor , LOW);
             delay(50);
@@ -1025,14 +1038,8 @@ void loop() {
         }
 
       } else {
-
-        Serial.println("notify()");
-        //String fullinfo = "Firstname : " + firstname + "\nLastname : " + lastname + "\nBloodtype : " + bloodtype + "\nWeight : " + weight + " Height : " + height + "\nMore Information : " + moreinfo;
         DETECT = "FALL";
-        //send_json("HELP","FALL");
-        //send_notify(Api_fall,fullinfo,2,30); //ส่ง fall detec
         state = 2;
-        Serial.println("back to state 2");
       }
 
 
@@ -1042,8 +1049,8 @@ void loop() {
       Serial.println("state2");
 
       if (ACK == 1) {
-        send_again(30 * 1000);
         siren();
+        send_again(30 * 1000);
       } else {
         siren2();
       }
@@ -1070,7 +1077,6 @@ void loop() {
         //String fullinfo = "Firstname : " + firstname + "\nLastname : " + lastname + "\nMore Information : app.midatdb.com/PFrCbTJd2J";
         DETECT = "PRESS";
         //send_json("HELP","PRESS");
-        //send_notify(Api_press,fullinfo,2,30); //ส่ง fall detec
         state = 2;
       }
     } else if (state == 4) {
