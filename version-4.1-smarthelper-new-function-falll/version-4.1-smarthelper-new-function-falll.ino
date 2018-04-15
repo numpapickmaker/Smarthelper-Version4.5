@@ -99,7 +99,7 @@ String css_wifi = "<style>.login-containerhead {margin-top: 0;margin-bottom: 0;b
 String wifi_tailform = "<h2 class='login-header'>wifi config</h2><div class='login-container'><form  method='get' action='wifisave'><input id='s' name='s' length='32' placeholder='SSID'><br><br><input id='p' name='p' length='64' type='password' placeholder='password'><br><br><button type='submit'>save</button><br><br></form><a href='/'><button>back</button></a><br></div></div></body></html>";
 String back_to_main = " <!DOCTYPE html><html><head><!-- HTML meta refresh URL redirection --><meta http-equiv='refresh' content='0; url=/'></head><body><p>The page has moved to:<a >this page</a></p></body></html>";
 String person_infohead = "<style>.login-sub{padding-right: 0.75em ;display:inline;text-align: left;}.input-1{padding:5px;font-size:1em;width: 95%;}.input-2{margin-top: 10px;padding:5px;font-size:1em;width: 15%;}.input-3{margin-top: 10px;padding:5px;font-size:1em;width: 50%;}</style><body> <div class='login'><h2 class='login-header'>DEVICE INFORMATION</h2><div class='login-container'><form  method='get' action='wifisave'>";
-String DETECT = "FALL"; //change to PRESS or FALL for send json to line
+String DETECT = ""; //change to PRESS or FALL for send json to line
 long period;
 const char *ssid = ALIAS;
 const char *password = "";
@@ -257,7 +257,7 @@ void wifi_wakeup() {
   Serial.println("connect at function wifi wakeup");
   wifi_mode = 1 ;
 }
-void send_again(unsigned long t) {
+void send_notification(unsigned long t) {
   timerBat = millis();
   if (timerBat - preTime2Bat > t) {
     preTime2Bat = timerBat;
@@ -778,11 +778,9 @@ void checkSettingsMPU()
      The DLPF_CFG parameter sets the digital low pass filter configuration. It
      also determines the internal sampling rate used by the device as shown in
      the table below.
-
      Note: The accelerometer output rate is 1kHz. This means that for a Sample
      Rate greater than 1kHz, the same accelerometer sample may be output to the
      FIFO, DMP, and sensor registers more than once.
-
      <pre>
               |   ACCELEROMETER    |           GYROSCOPE
      DLPF_CFG | Bandwidth | Delay  | Bandwidth | Delay  | Sample Rate
@@ -796,7 +794,6 @@ void checkSettingsMPU()
      6        | 5Hz       | 19.0ms | 5Hz       | 18.6ms | 1kHz
      7        |   -- Reserved --   |   -- Reserved --   | Reserved
      </pre>
-
      @return DLFP configuration
      @see MPU6050_RA_CONFIG
      @see MPU6050_CFG_DLPF_CFG_BIT
@@ -868,8 +865,9 @@ void setup() {
   //#####verify I2C connection#####
   Serial.println("Testing device connections...");
   if (accelgyro.testConnection() == false) {
+    digitalWrite(vibration_motor, LOW);
     while (true) {
-      Serial.println("I2C Error");
+      //Serial.println("I2C Error");
       delay(1000);
     }
   }
@@ -935,6 +933,8 @@ void loop() {
     #######################################################*/
 
   if (pre_program_mode == 0) {
+    digitalWrite(emergency_led, HIGH );
+    beep(60);
     if (((timer - timeOut) / 1000) < 10) {
       if (buttonState == HIGH) {
         unsigned long timerAck = ((timer - preTime) / 1000);
@@ -949,16 +949,14 @@ void loop() {
       pre_program_mode = 2;
     }
 
-    digitalWrite(emergency_led, HIGH );
-    digitalWrite(battery_led, HIGH  );
+    
   }
   //buttonState = digitalRead(buttonPin);
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
   if (pre_program_mode == 1) {
     if (start_ap == 1) {
-      digitalWrite(battery_led , LOW );
-      check_battery(battery_led);
+      
       setup_apmode();
       start_ap = 0;
       beep(60);
@@ -968,26 +966,15 @@ void loop() {
     server.handleClient();
 
     digitalWrite(emergency_led, HIGH  );
-    //digitalWrite(  wifi_led, HIGH );
     delay(250);
     digitalWrite(emergency_led, LOW  );
-    // digitalWrite(  wifi_led, LOW );
     delay(250);
   }
   if (pre_program_mode == 2) {
-
-
-
-
     if (start_ap == 1) {
       start_ap = 0;
-      digitalWrite(battery_led , LOW );
-      digitalWrite(emergency_led, LOW  );
-
+      digitalWrite(battery_led , HIGH);
       setup_wifi();
-      //  digitalWrite(ledPin, LOW);
-      //   ESP.restart();
-
       microgear.init(KEY, SECRET, ALIAS);
       microgear.connect(APPID);
       //?
@@ -1009,22 +996,13 @@ void loop() {
     //microgear connect
     microgear.loop();
 
-
-
-    //WiFi.forceSleepBegin(0);
-    // toggle_battery_led(1000, battery_led); // led on pin12 battery
+    
     if (state == 0) {
-      //Serial.println("state 0");
-      //wifi_sleep(20 * 60000);
-      // buttonState = digitalRead(buttonPin);
-
       if (buttonState == HIGH) {
+        digitalWrite(emergency_led, HIGH);
         unsigned long timerAck = ((timer - preTime) / 1000);
-        //wifi_wakeup();
         if ( timerAck >= 1.0) {
-          digitalWrite(emergency_led, HIGH);
-          state = 3; //
-
+          state = 3; 
         }
       } else {
         preTime = timer;
@@ -1065,11 +1043,10 @@ void loop() {
     } else if (state == 2) {
       //buzzer , vibration on
       //รอ ack เพื่อเปลี่ยนเสียง
-      Serial.println("state2");
 
       if (ACK == 1) {
         siren();
-        send_again(30 * 1000);
+        send_notification(30 * 1000);
       } else {
         siren2();
       }
@@ -1114,6 +1091,6 @@ void loop() {
         state = 0;
       }
     }
-    read_battery_milsec(60000 , 12);
+    //read_battery_milsec(60000 , 12);
   }
 }
