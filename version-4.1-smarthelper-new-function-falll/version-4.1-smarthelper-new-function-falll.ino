@@ -31,8 +31,8 @@ int16_t intflag = 0 ;
 //Pin input/output
 #define vibration_motor  2
 #define buzzer           10
-#define battery_led      12
-#define emergency_led    13
+#define green_led      12
+#define red_led    13
 
 #define confirm_button   16
 #define battery_adc      A0
@@ -429,17 +429,22 @@ String current_ssid     = "your-ssid";
 String  current_password  = "your-password";
 
 void setup_wifi() {
+  
+  
   int s = 0;
   int p = 0;
   int n = 0;
-  delay(1000);
+  
   server.stop();
   WiFi.softAPdisconnect(true);
   Serial.println("Starting in STA mode");
   WiFi.mode(WIFI_STA);
-
   for (int j = 0 ; j < 4 ; j++) {
     if (WiFi.status() != WL_CONNECTED) {
+      digitalWrite(green_led, HIGH);
+      delay(100);
+      beep(750);
+      digitalWrite(green_led, LOW);
       current_ssid = ssid_list[j];
       char ssid1[current_ssid.length()];
       current_ssid.toCharArray(ssid1, current_ssid.length());
@@ -452,6 +457,7 @@ void setup_wifi() {
       Serial.println( current_password.length());
       Serial.println(password1);
       n = WiFi.scanNetworks();
+      
       for (int k = 0; k < n ; k++) {
         Serial.println("wifi scan " + WiFi.SSID(k));
         current_ssid.trim();
@@ -460,16 +466,18 @@ void setup_wifi() {
           WiFi.begin(ssid1, password1);
           for (int i = 0 ; i < 20; i ++) {
             if (WiFi.status() != WL_CONNECTED) {
-              // digitalWrite(wifi_led, LOW);
+              digitalWrite(green_led, LOW);
               delay(250);
               beep(100);
               Serial.print(".");
-              //digitalWrite(wifi_led, HIGH);
+              digitalWrite(green_led, HIGH);
               delay(250);
 
             }
+            
           }
         }
+        
       }
     } else {
       j = 5;
@@ -680,7 +688,7 @@ void siren() {
   for (freq = 500; freq < 1800; freq += 5)
   {
 
-    digitalWrite(emergency_led, HIGH);
+    digitalWrite(red_led, HIGH);
     pinMode(vibration_motor, OUTPUT);
     digitalWrite(vibration_motor , LOW);
     tone(buzzer, freq, time);     // Beep pin, freq, time
@@ -691,7 +699,7 @@ void siren() {
 
     tone(buzzer, freq, time);     // Beep pin, freq, time
 
-    digitalWrite(emergency_led, LOW);
+    digitalWrite(red_led, LOW);
     pinMode(vibration_motor, INPUT);
     delay(5);
   }
@@ -700,7 +708,7 @@ void siren() {
   for (freq = 600; freq < 1200; freq += 5)
   {
 
-    digitalWrite(emergency_led, HIGH);
+    digitalWrite(red_led, HIGH);
     pinMode(vibration_motor, OUTPUT);
     digitalWrite(vibration_motor , LOW);
     tone(buzzer, freq, time);     // Beep pin, freq, time
@@ -711,7 +719,7 @@ void siren() {
 
     tone(buzzer, freq, time);     // Beep pin, freq, time
 
-    digitalWrite(emergency_led, LOW);
+    digitalWrite(red_led, LOW);
     pinMode(vibration_motor, INPUT);
     delay(5);
   }
@@ -750,6 +758,7 @@ void send_json(String data, String MSG) {
 
 void doInt()
 {
+  timeOut = timer;
   state = 1;
 }
 
@@ -840,6 +849,7 @@ void checkSettingsMPU()
 
   Serial.println();
 }
+
 void setup() {
 
   Device_id.toCharArray(ALIAS, sizeof(ALIAS));
@@ -853,7 +863,7 @@ void setup() {
 
   Serial.begin(115200);
 
-  //#####initialize IMU MPU6050#####
+  
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
   Wire.begin(5, 4);//New version
   //Wire.begin(); //Old version
@@ -873,6 +883,8 @@ void setup() {
   }
   //#####End verify I2C connection#####
 
+  //#####initialize IMU MPU6050#####
+  
   accelgyro.initialize();
   accelgyro.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
   accelgyro.setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
@@ -887,32 +899,26 @@ void setup() {
 
   //#####End initialize IMU MPU6050#####
 
+  //#####interrupt
   attachInterrupt(int_1, doInt, RISING);
 
   //#####initialize input/output#####
-
   //vibration active Low
   pinMode(vibration_motor, OUTPUT);
   digitalWrite(vibration_motor, HIGH);
-
   pinMode(confirm_button, INPUT);
-  pinMode(battery_led, OUTPUT);
-  pinMode(emergency_led, OUTPUT);
-
+  pinMode(green_led, OUTPUT);
+  digitalWrite(green_led, LOW);
+  pinMode(red_led, OUTPUT);
+  digitalWrite(red_led, LOW);
   // pinMode(wifi_led, OUTPUT);
   pinMode(battery_adc, INPUT);
-  pinMode(battery_led , OUTPUT);
+  pinMode(green_led , OUTPUT);
+  digitalWrite(green_led, LOW);
   pinMode(buzzer , OUTPUT);
-
+  digitalWrite(buzzer, LOW);
   //#####End initialize input/output#####
-
-
-
   prepareFile();//SSID PASS File
-  //?pinMode(vibration_motor, INPUT);
-
-
-
 
   beep(50);
   beep(50);
@@ -931,10 +937,8 @@ void loop() {
     1                | กดปุ่ม4วินาที         | AP mode
     2                | ไม่มีการกดปุ่ม       | Normal mode
     #######################################################*/
-
   if (pre_program_mode == 0) {
-    digitalWrite(emergency_led, HIGH );
-    beep(60);
+    digitalWrite(green_led, HIGH );
     if (((timer - timeOut) / 1000) < 10) {
       if (buttonState == HIGH) {
         unsigned long timerAck = ((timer - preTime) / 1000);
@@ -956,7 +960,6 @@ void loop() {
   // if it is, the buttonState is HIGH:
   if (pre_program_mode == 1) {
     if (start_ap == 1) {
-      
       setup_apmode();
       start_ap = 0;
       beep(60);
@@ -964,16 +967,16 @@ void loop() {
     }
     dnsServer.processNextRequest();
     server.handleClient();
-
-    digitalWrite(emergency_led, HIGH  );
+    digitalWrite(green_led, HIGH  );
     delay(250);
-    digitalWrite(emergency_led, LOW  );
+    digitalWrite(green_led, LOW  );
     delay(250);
   }
   if (pre_program_mode == 2) {
     if (start_ap == 1) {
       start_ap = 0;
-      digitalWrite(battery_led , HIGH);
+      digitalWrite(green_led , HIGH);
+      
       setup_wifi();
       microgear.init(KEY, SECRET, ALIAS);
       microgear.connect(APPID);
@@ -987,19 +990,40 @@ void loop() {
       //?
     }
     // wifi check disconnect
+    
+    // NEW
     if (WiFi.status() != WL_CONNECTED) {
       setup_wifi();
+      if(WiFi.status() == WL_CONNECTED){
+        microgear.init(KEY, SECRET, ALIAS);
+        microgear.connect(APPID);
+      microgear.loop();
+      }
+    }
+    if (microgear.connected())
+    {
+       microgear.loop();
+    }
+    
+    //END NEW
+
+    //OlD
+    /*if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("check point3");
+      setup_wifi();
+      Serial.println("check point1");
       microgear.init(KEY, SECRET, ALIAS);
       microgear.connect(APPID);
       microgear.loop();
     }
     //microgear connect
-    microgear.loop();
-
+    microgear.loop();*/
+    //END OLD
     
     if (state == 0) {
+      //Serial.println("check point2");
       if (buttonState == HIGH) {
-        digitalWrite(emergency_led, HIGH);
+        digitalWrite(green_led, HIGH);
         unsigned long timerAck = ((timer - preTime) / 1000);
         if ( timerAck >= 1.0) {
           state = 3; 
@@ -1014,28 +1038,32 @@ void loop() {
       buttonState = digitalRead(confirm_button);
 
       if (((timer - timeOut) / 1000) <= 8) {
-        digitalWrite(emergency_led, LOW);
-        pinMode(vibration_motor , OUTPUT);
-        digitalWrite(vibration_motor , LOW);
+        digitalWrite(green_led, LOW);
+        
+        
+        pinMode(vibration_motor, OUTPUT);
+        digitalWrite(vibration_motor , HIGH);
         delay(500);
-        digitalWrite(emergency_led, HIGH);
-        pinMode( vibration_motor, INPUT);
+        digitalWrite(green_led, HIGH);
+        digitalWrite(vibration_motor , LOW);
         delay(500);
 
         if (buttonState == HIGH) {
           unsigned long timerAck = ((timer - preTime) / 1000);
           if ( timerAck >= 1.0) {
-            digitalWrite(emergency_led, LOW);
-            digitalWrite(vibration_motor , LOW);
+            digitalWrite(green_led, LOW);
+            digitalWrite(vibration_motor , HIGH);
             delay(50);
-            state = 5;
+            state = 4;
           }
         } else {
           preTime = timer;
         }
 
       } else {
+        
         DETECT = "FALL";
+        ACK = 1;
         state = 2;
       }
 
@@ -1044,7 +1072,7 @@ void loop() {
       //buzzer , vibration on
       //รอ ack เพื่อเปลี่ยนเสียง
 
-      if (ACK == 1) {
+      if (ACK == 1) { 
         siren();
         send_notification(30 * 1000);
       } else {
@@ -1082,15 +1110,7 @@ void loop() {
         ACK = 1; // Enable send massage to line every 30 sec
         state = 0;
       }
-    } else if (state == 5) {
-      buttonState = digitalRead(confirm_button);
-      if (buttonState == HIGH) {
-
-      } else {
-        delay(50);
-        state = 0;
-      }
-    }
+    } 
     //read_battery_milsec(60000 , 12);
   }
 }
