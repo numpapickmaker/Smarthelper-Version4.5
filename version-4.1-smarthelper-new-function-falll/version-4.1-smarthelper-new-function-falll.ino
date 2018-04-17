@@ -412,6 +412,7 @@ void setup_wifi() {
 
       }
     } else {
+      Serial.print("Ending");
       j = 5;
     }
   }
@@ -617,6 +618,7 @@ void setup_apmode() {
 
 void siren() {
   int freq;
+  Serial.println("vibra4");
   for (freq = 500; freq < 1800; freq += 5)
   {
 
@@ -636,6 +638,7 @@ void siren() {
     delay(5);
   }
 } void siren2() {
+  Serial.println("vibra5");
   int freq;
   for (freq = 600; freq < 1200; freq += 5)
   {
@@ -950,96 +953,99 @@ void loop() {
       //microgear connect
       microgear.loop();*/
     //END OLD
-
-    if (state == 0) {
-      //Serial.println("check point2");
-      digitalWrite(green_led, HIGH);
-      if (buttonState == HIGH) {
-        unsigned long timerAck = ((timer - preTime) / 1000);
-        if ( timerAck >= 1.0) {
-          state = 3;
-        }
-      } else {
-        preTime = timer;
-      }
-
-
-    } else if (state == 1) {
-      Serial.println((timer - timeOut) / 1000);
-      buttonState = digitalRead(confirm_button);
-
-      if (((timer - timeOut) / 1000) <= 8) {
-        digitalWrite(green_led, LOW);
-        pinMode(vibration_motor, OUTPUT);
-        digitalWrite(vibration_motor , HIGH);
-        delay(500);
+    if (WiFi.status() == WL_CONNECTED) {
+      if (state == 0) {
+        //Serial.println("check point2");
         digitalWrite(green_led, HIGH);
-        digitalWrite(vibration_motor , LOW);
-        delay(500);
-
         if (buttonState == HIGH) {
           unsigned long timerAck = ((timer - preTime) / 1000);
           if ( timerAck >= 1.0) {
-            digitalWrite(green_led, LOW);
-            digitalWrite(vibration_motor , HIGH);
-            delay(50);
-            state = 4;
+            state = 3;
           }
         } else {
           preTime = timer;
         }
 
-      } else {
 
-        DETECT = "FALL";
-        ACK = 1;
-        state = 2;
-      }
+      } else if (state == 1) {
+        Serial.println((timer - timeOut) / 1000);
+        buttonState = digitalRead(confirm_button);
 
+        if (((timer - timeOut) / 1000) <= 8) {
+          digitalWrite(green_led, LOW);
+          Serial.println("vibra1");
+          pinMode(vibration_motor, OUTPUT);
+          digitalWrite(vibration_motor , HIGH);
+          delay(500);
+          digitalWrite(green_led, HIGH);
+          digitalWrite(vibration_motor , LOW);
+          delay(500);
 
-    } else if (state == 2) {
-      //buzzer , vibration on
-      //รอ ack เพื่อเปลี่ยนเสียง
+          if (buttonState == HIGH) {
+            unsigned long timerAck = ((timer - preTime) / 1000);
+            if ( timerAck >= 1.0) {
+              digitalWrite(green_led, LOW);
+              Serial.println("vibra2");
+              digitalWrite(vibration_motor , HIGH);
+              delay(50);
+              state = 4;
+            }
+          } else {
+            preTime = timer;
+          }
 
-      if (ACK == 1) {
-        siren();
-        send_notification(30 * 1000);
-      } else {
-        siren2();
-      }
-      buttonState = digitalRead(confirm_button);
+        } else {
 
-      if (buttonState == HIGH ) {
-
-        unsigned long timerAck = ((timer - preTime) / 1000);
-        if ( timerAck >= 1) {
-
-          analogWrite(buzzer, 0);       // 0 turns it off
-          state = 4;
+          DETECT = "FALL";
+          ACK = 1;
+          state = 2;
         }
 
-      } else {
-        preTime = timer;
-      }
 
-    } else if (state == 3) {
-      buttonState = digitalRead(confirm_button);
-      if (buttonState == HIGH) {
+      } else if (state == 2) {
+        //buzzer , vibration on
+        //รอ ack เพื่อเปลี่ยนเสียง
+        Serial.println("vibra3");
+        if (ACK == 1) {
+          siren();
+          send_notification(30 * 1000);
+        } else {
+          siren2();
+        }
+        buttonState = digitalRead(confirm_button);
 
-      } else {
-        DETECT = "PRESS";
-        state = 2;
-      }
-    } else if (state == 4) {
-      buttonState = digitalRead(confirm_button);
-      if (buttonState == HIGH) {
+        if (buttonState == HIGH ) {
 
-      } else {
-        delay(50);
-        ACK = 1; // Enable send massage to line every 30 sec
-        state = 0;
+          unsigned long timerAck = ((timer - preTime) / 1000);
+          if ( timerAck >= 1) {
+
+            analogWrite(buzzer, 0);       // 0 turns it off
+            state = 4;
+          }
+
+        } else {
+          preTime = timer;
+        }
+
+      } else if (state == 3) {
+        buttonState = digitalRead(confirm_button);
+        if (buttonState == HIGH) {
+
+        } else {
+          DETECT = "PRESS";
+          state = 2;
+        }
+      } else if (state == 4) {
+        buttonState = digitalRead(confirm_button);
+        if (buttonState == HIGH) {
+
+        } else {
+          delay(50);
+          ACK = 1; // Enable send massage to line every 30 sec
+          state = 0;
+        }
       }
+      read_battery_milsec(60000 , 12);
     }
-    read_battery_milsec(60000 , 12);
   }
 }
