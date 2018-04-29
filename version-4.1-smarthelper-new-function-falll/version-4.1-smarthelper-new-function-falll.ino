@@ -937,6 +937,10 @@ void loop() {
     if (microgear.connected())
     {
       microgear.loop();
+    }else{//update microgear connect
+      microgear.init(KEY, SECRET, ALIAS);
+      microgear.connect(APPID);
+      microgear.loop();
     }
 
     //END NEW
@@ -1005,7 +1009,6 @@ void loop() {
       } else if (state == 2) {
         //buzzer , vibration on
         //รอ ack เพื่อเปลี่ยนเสียง
-        Serial.println("vibra3");
         if (ACK == 1) {
           siren();
           send_notification(30 * 1000);
