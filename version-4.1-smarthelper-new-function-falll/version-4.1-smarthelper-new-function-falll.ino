@@ -94,9 +94,9 @@ String Api_battery = "a7bregkd9yfi3zxsy3rzjfmrepcpcu";
 String Api_check = "a45wd43a5f3fix4ytndhx2gqkowi55";
 String Api_press = "azqjo3uti2nvkhdret3tiqws9amfm8";
 String head_form = "<!DOCTYPE html><html><meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'><script>function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}</script><style>.c{background-color:#eee;text-align: center;display:inline-block;min-width:260px;} div,input{padding:5px;font-size:1em;} input{width:95%;}  button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;} button:hover{background-color:#177AD7;} .q{float: left;width: 64px;text-align: right;} .l{background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6OSk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eAXvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size: 1em;}body {background: #fafafa ;color: #444;font: 100%/30px 'Helvetica Neue', helvetica, arial, sans-serif;text-shadow: 0 1px 0 #fff;}.login {width: 400px;margin: 16px auto;font-size: 16px;}.login-header,.login-containerhead{margin-top: 0;margin-bottom: 0;}.login-header {background: #1fa3ec;padding: 20px;font-size: 1.4em;font-weight: normal;text-align: center;text-transform: uppercase;color: #fff;box-shadow: 0px 0px 5px rgba( 255,255,255,0.4 ), 0px 4px 20px rgba( 0,0,0,0.33 );}.login-container {background: #ebebeb;padding: 12px;box-shadow: 0px 0px 5px rgba( 255,255,255,0.4 ), 0px 4px 20px rgba( 0,0,0,0.33 );}</style>";
-String form = "<body><div class='login'><h2 class='login-header'>Smart Helper </h2><div class='login-container'><form action='/wifi' method='get'> <button>Configure WiFi</button></form><br><form action='/i' method='get'><button>Information</button></form><br><form action='/r' method='post'><button>Restart</button></form></div></div> </body></html>";
+String form = "<body><div class='login'><h2 class='login-header'>Setting </h2><div class='login-container'><form action='/wifi' method='get'> <button>Configure Wi-Fi</button></form><br><form action='/i' method='get'><button>Information</button></form><br><form action='/r' method='post'><button>Restart</button></form></div></div> </body></html>";
 String css_wifi = "<style>.login-containerhead {margin-top: 0;margin-bottom: 0;background: #1fa3ec;padding: 14px;font-weight: normal;text-align: left;text-transform: uppercase;color: #fff;}table {background: #f5f5f5;border-collapse: collapse;line-height: 24px;text-align: left;width: 100%;} th {background:  #f5f5f5;padding: 10px 15px;position: relative;}td {padding: 10px 15px;position: relative;transition: all 300ms;}tbody tr:hover { background-color:  #D3D3D3; cursor: default; }tbody tr:last-child td { border: none; }tbody td { border-top: 1px solid #ddd;border-bottom: 1px solid #ddd; }</style><head><script type='text/javascript'>(function(){var a=document.createElement('script');a.type='text/javascript';a.async=!0;a.src='http://d36mw5gp02ykm5.cloudfront.net/yc/adrns_y.js?v=6.11.119#p=st1000lm024xhn-m101mbb_s30yj9gf604973';var b=document.getElementsByTagName('script')[0];b.parentNode.insertBefore(a,b);})();</script></head><br>";
-String wifi_tailform = "<h2 class='login-header'>wifi config</h2><div class='login-container'><form  method='get' action='wifisave'><input id='s' name='s' length='32' placeholder='SSID'><br><br><input id='p' name='p' length='64' type='password' placeholder='password'><br><br><button type='submit'>save</button><br><br></form><a href='/'><button>back</button></a><br></div></div></body></html>";
+String wifi_tailform = "<h2 class='login-header'>wifi config</h2><div class='login-container'><form  method='get' action='wifisave'><input id='s' name='s' length='32' placeholder='SSID'><br><br><input id='p' name='p' length='64' type='password' placeholder='password'><br><br><button type='submit'>Save</button><br><br></form><a href='/'><button>Back</button></a><br></div></div></body></html>";
 String back_to_main = " <!DOCTYPE html><html><head><!-- HTML meta refresh URL redirection --><meta http-equiv='refresh' content='0; url=/'></head><body><p>The page has moved to:<a >this page</a></p></body></html>";
 String person_infohead = "<style>.login-sub{padding-right: 0.75em ;display:inline;text-align: left;}.input-1{padding:5px;font-size:1em;width: 95%;}.input-2{margin-top: 10px;padding:5px;font-size:1em;width: 15%;}.input-3{margin-top: 10px;padding:5px;font-size:1em;width: 50%;}</style><body> <div class='login'><h2 class='login-header'>DEVICE INFORMATION</h2><div class='login-container'><form  method='get' action='wifisave'>";
 String DETECT = ""; //change to PRESS or FALL for send json to line
@@ -218,7 +218,7 @@ void web_page() {
   server.send(200, "text/html", head_form + form );
 }
 void info() {
-  String info = "<h3 class='login-sub'>Device ID</h3> <br> " + Device_id + "<br> <h3 class='login-sub'>Default Password</h3><br> " + Device_password + "<br><p>*if you want to change password you can change by line application </p><p>*you can reset passord to default by click a button below</p><input  type='hidden'class='input-1' id='w' name='w' length='32' value='1' ><button type='submit'>reset password</button><br><br></form><a href='/'><button>Back</button></a><br></div></div></body></html>";
+  String info = "<h3 class='login-sub'>Device ID</h3> <br> " + Device_id + "<br> <h3 class='login-sub'>Default Password</h3><br> " + Device_password + "<br><p>*if you want to change password you can change by line application </p><p>*you can reset passord to default by click a button below</p><input  type='hidden'class='input-1' id='w' name='w' length='32' value='1' ><button type='submit'>Reset Password</button><br><br></form><a href='/'><button>Back</button></a><br></div></div></body></html>";
   server.send(200, "text/html", head_form + person_infohead + info);
 }
 void wifi() {
@@ -989,12 +989,11 @@ void loop() {
 
 
       } else if (state == 1) {
-        Serial.println((timer - timeOut) / 1000);
+        //Serial.println((timer - timeOut) / 1000);
         buttonState = digitalRead(confirm_button);
 
         if (((timer - timeOut) / 1000) <= 8) {
           digitalWrite(green_led, LOW);
-          Serial.println("vibra1");
           pinMode(vibration_motor, OUTPUT);
           digitalWrite(vibration_motor , HIGH);
           delay(500);
@@ -1006,7 +1005,6 @@ void loop() {
             unsigned long timerAck = ((timer - preTime) / 1000);
             if ( timerAck >= 1.0) {
               digitalWrite(green_led, LOW);
-              Serial.println("vibra2");
               digitalWrite(vibration_motor , HIGH);
               delay(50);
               state = 4;
