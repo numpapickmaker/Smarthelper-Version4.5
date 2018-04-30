@@ -54,7 +54,7 @@ ESP8266WebServer server(80);
 //Timer
 unsigned long timer, preTime , timeOut;
 
-int state = 0 ;
+int state = 5 ;
 int tmp[2];
 int m;
 int i;
@@ -136,7 +136,7 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
 void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
   Serial.println("Connected to NETPIE...");
   microgear.setName("Smarthelper2");
-  send_json("REGISTER", "Device Online");
+  //send_json("REGISTER", "Device Online");
 }
 
 unsigned long timerBat, preTimeBat, preTime2Bat , timeOutBat , timer_sleep, preTime2sleep;
@@ -151,24 +151,41 @@ void beep(unsigned char delayms) {
 }
 
 int8_t readbattery = 1 ;
-void read_battery_milsec(unsigned long t , int pin) {
+void read_battery_milsec(unsigned long t) {
   timerBat = millis();
   if (readbattery == 1) {
+    sensorValue = analogRead( battery_adc);
     preTimeBat = millis();
+    if (sensorValue < 820 ) {//น้อยกว่า3.5V จะเตือน//837
+      Serial.println(sensorValue);//*3.3/1024
+      digitalWrite(red_led, HIGH);
+      if (WiFi.status() == WL_CONNECTED) {
+        send_json("CHECK", "LOW");
+      }
+       
+    }else if(sensorValue < 850 ) {
+      digitalWrite(red_led, HIGH);
+    }
+    else {
+      digitalWrite(red_led, LOW);
+    }
   }
 
   if (timerBat - preTimeBat > t) {
     sensorValue = analogRead( battery_adc);
-    Serial.println("test bat");
     Serial.println(timerBat - preTimeBat);
-    if (sensorValue < 837 ) {//น้อยกว่า3.5V จะเตือน//837
+    if (sensorValue < 820 ) {//น้อยกว่า3.5V จะเตือน//837
       Serial.println(sensorValue);//*3.3/1024
-      digitalWrite(pin, HIGH);
+      digitalWrite(red_led, HIGH);
       if (WiFi.status() == WL_CONNECTED) {
         send_json("CHECK", "LOW");
       }
-    } else {
-      digitalWrite(pin, LOW);
+       
+    }else if(sensorValue < 850 ) {
+      digitalWrite(red_led, HIGH);
+    }
+    else {
+      digitalWrite(red_led, LOW);
     }
     preTimeBat = millis();
 
@@ -389,7 +406,6 @@ void setup_wifi() {
       Serial.println( current_password.length());
       Serial.println(password1);
       n = WiFi.scanNetworks();
-
       for (int k = 0; k < n ; k++) {
         Serial.println("wifi scan " + WiFi.SSID(k));
         current_ssid.trim();
@@ -618,7 +634,6 @@ void setup_apmode() {
 
 void siren() {
   int freq;
-  Serial.println("vibra4");
   for (freq = 500; freq < 1800; freq += 5)
   {
 
@@ -934,15 +949,17 @@ void loop() {
         microgear.loop();
       }
     }
-    if (microgear.connected())
-    {
-      microgear.loop();
-    }else{//update microgear connect
+
+    if ((WiFi.status() == WL_CONNECTED) && (!microgear.connected())) {
       microgear.init(KEY, SECRET, ALIAS);
       microgear.connect(APPID);
       microgear.loop();
     }
 
+    if (microgear.connected())
+    {
+      microgear.loop();
+    }
     //END NEW
 
     //OlD
@@ -1010,8 +1027,9 @@ void loop() {
         //buzzer , vibration on
         //รอ ack เพื่อเปลี่ยนเสียง
         if (ACK == 1) {
-          siren();
+          
           send_notification(30 * 1000);
+          siren();
         } else {
           siren2();
         }
@@ -1045,10 +1063,18 @@ void loop() {
         } else {
           delay(50);
           ACK = 1; // Enable send massage to line every 30 sec
-          state = 0;
+          state = 5;
         }
+      } else if (state == 5) {
+        digitalWrite(green_led, HIGH);
+        beep(100);
+        digitalWrite(green_led, LOW);
+        beep(100);
+        digitalWrite(green_led, HIGH);
+        state = 0;
       }
-      read_battery_milsec(60000 , 12);
+
+      read_battery_milsec(600000);
     }
   }
 }
