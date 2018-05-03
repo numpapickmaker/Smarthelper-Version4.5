@@ -993,13 +993,15 @@ void loop() {
         buttonState = digitalRead(confirm_button);
 
         if (((timer - timeOut) / 1000) <= 8) {
+          
+          digitalWrite(green_led, HIGH);
+          digitalWrite(vibration_motor , LOW);
+          delay(500);
           digitalWrite(green_led, LOW);
           pinMode(vibration_motor, OUTPUT);
           digitalWrite(vibration_motor , HIGH);
           delay(500);
-          digitalWrite(green_led, HIGH);
-          digitalWrite(vibration_motor , LOW);
-          delay(500);
+          
 
           if (buttonState == HIGH) {
             unsigned long timerAck = ((timer - preTime) / 1000);
