@@ -15,8 +15,8 @@ MPU6050 accelgyro;
 const uint8_t scl = D1;
 const uint8_t sda = D2;
 const uint8_t int_1 = D5;
-const uint8_t FreefallDetectionThreshold = 125;
-const uint8_t FreefallDetectionDuration = 100;
+const uint8_t FreefallDetectionThreshold = 100;
+const uint8_t FreefallDetectionDuration = 200;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 int16_t intflag = 0 ;
@@ -74,7 +74,7 @@ String ssid_list[4];
 String password_list[4];
 char ALIAS[9];
 
-String Device_id = String(ESP.getChipId());
+String Device_id =  String(ESP.getChipId());
 
 String Device_password = "Smarthelper";
 
@@ -134,9 +134,11 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
 }
 
 void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
+  
   Serial.println("Connected to NETPIE...");
-  microgear.setName("Smarthelper2");
-  //send_json("REGISTER", "Device Online");
+  microgear.setName(ALIAS);
+  
+  send_json("REGISTER", "Device Online");
 }
 
 unsigned long timerBat, preTimeBat, preTime2Bat , timeOutBat , timer_sleep, preTime2sleep;
