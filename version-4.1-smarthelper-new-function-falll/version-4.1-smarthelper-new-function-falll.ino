@@ -129,15 +129,15 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
     send_json("CHECK", "CHECK");
   } else if (stringOne.equals("ACK") && state == 2) {
     ACK = 0;
-    send_json("CHECK", "OK Device Recieve Acknowladge");
+    send_json("CHECK", "อุปกรณ์: "+String(ALIAS)+" ได้รับการตอบรับแล้ว");
   }
 }
 
 void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
   
   Serial.println("Connected to NETPIE...");
-  microgear.setName(ALIAS);
-  
+  //microgear.setName(ALIAS);
+  microgear.setName("ALIAS");
   send_json("REGISTER", "Device Online");
 }
 
@@ -225,7 +225,20 @@ void info() {
 }
 void wifi() {
   int n = WiFi.scanNetworks();
-  String wifilist = "<body><div class='login'><div class='login-container'><h3 class='login-containerhead'>wireless network connection</h3><table ><thead><tr><th>#</th><th>SSID</th><th>quality</th></tr></thead><tbody>";
+  String wifilist = "<body><div class='login'><div class='login-container'><h3 class='login-containerhead'>wireless network list</h3><table ><thead><tr><th>#</th><th>SSID</th><th>PASSWORD</th></tr>";
+   for(int i = 0;i < 4;i++){
+      wifilist += "<tr><td>" ;
+      wifilist += i + 1;
+      wifilist += "</td><td><a >" ;
+      wifilist += ssid_list[i];
+      wifilist += "</a></td><td>";
+      wifilist += password_list[i];
+      wifilist += "</a></td>";
+      wifilist += "</tr>";
+   }
+   wifilist += "</thead><tbody></tbody></table><br><br>";
+   //scan wifi บริเวณรอบๆ
+   wifilist += "<h3 class='login-containerhead'>wireless network connection</h3><table ><thead><tr><th>#</th><th>SSID</th><th>quality</th></tr></thead><tbody>";
 
   Serial.println("scan done");
   if (n == 0)
@@ -825,8 +838,9 @@ void setup() {
   Serial.println("Initialize MPU");
 
   //#####verify I2C connection#####
-  Serial.println("Testing device connections...");
+ Serial.println("Testing device connections...");
   if (accelgyro.testConnection() == false) {
+    pinMode(vibration_motor, OUTPUT);
     digitalWrite(vibration_motor, LOW);
     while (true) {
       //Serial.println("I2C Error");
@@ -834,7 +848,7 @@ void setup() {
     }
   }
   //#####End verify I2C connection#####
-
+  
   //#####initialize IMU MPU6050#####
 
   accelgyro.initialize();
@@ -853,7 +867,6 @@ void setup() {
 
   //#####interrupt
   attachInterrupt(int_1, doInt, RISING);
-
   //#####initialize input/output#####
   //vibration active Low
   pinMode(vibration_motor, OUTPUT);
