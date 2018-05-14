@@ -830,8 +830,8 @@ void setup() {
 
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-  Wire.begin(5, 4);//New version
-  //Wire.begin(); //Old version
+  //Wire.begin(5, 4);//New version
+  Wire.begin(); //Old version
 #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
   Fastwire::setup(400, true);
 #endif
@@ -906,12 +906,17 @@ void loop() {
     if (((timer - timeOut) / 1000) < 10) {
       if (buttonState == HIGH) {
         unsigned long timerAck = ((timer - preTime) / 1000);
-        if (timerAck >= 4) {
+        if (timerAck >= 3) {
           delay(50);
           pre_program_mode = 1;
         }
       } else {
+        digitalWrite(green_led ,HIGH);
+        delay(500);
+        digitalWrite(green_led ,LOW);
+        delay(500);
         preTime = timer;
+        
       }
     } else {
       pre_program_mode = 2;
@@ -926,8 +931,9 @@ void loop() {
     if (start_ap == 1) {
       setup_apmode();
       start_ap = 0;
-      beep(60);
-      beep(60);
+      beep(250);
+      beep(50);
+      beep(50);
     }
     dnsServer.processNextRequest();
     server.handleClient();
@@ -1081,10 +1087,11 @@ void loop() {
           state = 5;
         }
       } else if (state == 5) {
+        //send_json("CHECK", "อุปกรณ์: "+String(ALIAS)+" ได้รับการตอบรับแล้ว");
         digitalWrite(green_led, HIGH);
-        beep(100);
+        beep(60);
         digitalWrite(green_led, LOW);
-        beep(100);
+        beep(60);
         digitalWrite(green_led, HIGH);
         state = 0;
       }
