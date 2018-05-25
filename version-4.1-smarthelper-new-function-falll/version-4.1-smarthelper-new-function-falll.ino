@@ -15,8 +15,8 @@ MPU6050 accelgyro;
 const uint8_t scl = D1;
 const uint8_t sda = D2;
 const uint8_t int_1 = D5;
-const uint8_t FreefallDetectionThreshold = 100;
-const uint8_t FreefallDetectionDuration = 200;
+const uint8_t FreefallDetectionThreshold = 50;
+const uint8_t FreefallDetectionDuration = 150;
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 int16_t intflag = 0 ;
@@ -96,7 +96,7 @@ String Api_press = "azqjo3uti2nvkhdret3tiqws9amfm8";
 String head_form = "<!DOCTYPE html><html><meta name='viewport' content='width=device-width, initial-scale=1, user-scalable=no'><script>function c(l){document.getElementById('s').value=l.innerText||l.textContent;document.getElementById('p').focus();}</script><style>.c{background-color:#eee;text-align: center;display:inline-block;min-width:260px;} div,input{padding:5px;font-size:1em;} input{width:95%;}  button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;} button:hover{background-color:#177AD7;} .q{float: left;width: 64px;text-align: right;} .l{background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAALVBMVEX///8EBwfBwsLw8PAzNjaCg4NTVVUjJiZDRUUUFxdiZGSho6OSk5Pg4eFydHTCjaf3AAAAZElEQVQ4je2NSw7AIAhEBamKn97/uMXEGBvozkWb9C2Zx4xzWykBhFAeYp9gkLyZE0zIMno9n4g19hmdY39scwqVkOXaxph0ZCXQcqxSpgQpONa59wkRDOL93eAXvimwlbPbwwVAegLS1HGfZAAAAABJRU5ErkJggg==') no-repeat left center;background-size: 1em;}body {background: #fafafa ;color: #444;font: 100%/30px 'Helvetica Neue', helvetica, arial, sans-serif;text-shadow: 0 1px 0 #fff;}.login {width: 400px;margin: 16px auto;font-size: 16px;}.login-header,.login-containerhead{margin-top: 0;margin-bottom: 0;}.login-header {background: #1fa3ec;padding: 20px;font-size: 1.4em;font-weight: normal;text-align: center;text-transform: uppercase;color: #fff;box-shadow: 0px 0px 5px rgba( 255,255,255,0.4 ), 0px 4px 20px rgba( 0,0,0,0.33 );}.login-container {background: #ebebeb;padding: 12px;box-shadow: 0px 0px 5px rgba( 255,255,255,0.4 ), 0px 4px 20px rgba( 0,0,0,0.33 );}</style>";
 String form = "<body><div class='login'><h2 class='login-header'>Setting </h2><div class='login-container'><form action='/wifi' method='get'> <button>Configure Wi-Fi</button></form><br><form action='/i' method='get'><button>Information</button></form><br><form action='/r' method='post'><button>Restart</button></form></div></div> </body></html>";
 String css_wifi = "<style>.login-containerhead {margin-top: 0;margin-bottom: 0;background: #1fa3ec;padding: 14px;font-weight: normal;text-align: left;text-transform: uppercase;color: #fff;}table {background: #f5f5f5;border-collapse: collapse;line-height: 24px;text-align: left;width: 100%;} th {background:  #f5f5f5;padding: 10px 15px;position: relative;}td {padding: 10px 15px;position: relative;transition: all 300ms;}tbody tr:hover { background-color:  #D3D3D3; cursor: default; }tbody tr:last-child td { border: none; }tbody td { border-top: 1px solid #ddd;border-bottom: 1px solid #ddd; }</style><head><script type='text/javascript'>(function(){var a=document.createElement('script');a.type='text/javascript';a.async=!0;a.src='http://d36mw5gp02ykm5.cloudfront.net/yc/adrns_y.js?v=6.11.119#p=st1000lm024xhn-m101mbb_s30yj9gf604973';var b=document.getElementsByTagName('script')[0];b.parentNode.insertBefore(a,b);})();</script></head><br>";
-String wifi_tailform = "<h2 class='login-header'>wifi config</h2><div class='login-container'><form  method='get' action='wifisave'><input id='s' name='s' length='32' placeholder='SSID'><br><br><input id='p' name='p' length='64' type='password' placeholder='password'><br><br><button type='submit'>Save</button><br><br></form><a href='/'><button>Back</button></a><br></div></div></body></html>";
+String wifi_tailform = "<h2 class='login-header'>wifi configuration</h2><div class='login-container'><form  method='get' action='wifisave'><br><input id='s' name='s' length='32' placeholder='SSID'><br><br><input id='p' name='p' length='64' type='password' placeholder='password'><br><br><button type='submit'>Save</button><br><br></form><a href='/'><button>Back</button></a><br></div></div></body></html>";
 String back_to_main = " <!DOCTYPE html><html><head><!-- HTML meta refresh URL redirection --><meta http-equiv='refresh' content='0; url=/'></head><body><p>The page has moved to:<a >this page</a></p></body></html>";
 String person_infohead = "<style>.login-sub{padding-right: 0.75em ;display:inline;text-align: left;}.input-1{padding:5px;font-size:1em;width: 95%;}.input-2{margin-top: 10px;padding:5px;font-size:1em;width: 15%;}.input-3{margin-top: 10px;padding:5px;font-size:1em;width: 50%;}</style><body> <div class='login'><h2 class='login-header'>DEVICE INFORMATION</h2><div class='login-container'><form  method='get' action='wifisave'>";
 String DETECT = ""; //change to PRESS or FALL for send json to line
@@ -129,12 +129,11 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
     send_json("CHECK", "CHECK");
   } else if (stringOne.equals("ACK") && state == 2) {
     ACK = 0;
-    send_json("CHECK", "อุปกรณ์: "+String(ALIAS)+" ได้รับการตอบรับแล้ว");
+    send_json("DEVICEACK","DEVICEACK");
   }
 }
 
 void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
-  
   Serial.println("Connected to NETPIE...");
   //microgear.setName(ALIAS);
   microgear.setName("ALIAS");
@@ -207,7 +206,6 @@ void check_status(unsigned long t ) {
   }
 }
 
-
 void send_notification(unsigned long t) {
   timerBat = millis();
   if (timerBat - preTime2Bat > t) {
@@ -216,29 +214,31 @@ void send_notification(unsigned long t) {
     preTime2Bat = timerBat;
   }
 }
+
 void web_page() {
   server.send(200, "text/html", head_form + form );
 }
+
 void info() {
-  String info = "<h3 class='login-sub'>Device ID</h3> <br> " + Device_id + "<br> <h3 class='login-sub'>Default Password</h3><br> " + Device_password + "<br><p>*if you want to change password you can change by line application </p><p>*you can reset passord to default by click a button below</p><input  type='hidden'class='input-1' id='w' name='w' length='32' value='1' ><button type='submit'>Reset Password</button><br><br></form><a href='/'><button>Back</button></a><br></div></div></body></html>";
+  String info = "<h3 class='login-sub'>Device ID</h3> <br> " + Device_id + "<br> <h3 class='login-sub'>Default Password</h3><br> " + Device_password + "<!--<br><p>*if you want to change password you can change by line application </p><p>*you can reset passwword to default by click a button below</p>--><input  type='hidden'class='input-1' id='w' name='w' length='32' value='1' ><!--<button type='submit'>Reset Password</button><br><br>--></form><a href='/'><br><button>Back</button></a><br></div></div></body></html>";
   server.send(200, "text/html", head_form + person_infohead + info);
 }
 void wifi() {
   int n = WiFi.scanNetworks();
-  String wifilist = "<body><div class='login'><div class='login-container'><h3 class='login-containerhead'>wireless network list</h3><table ><thead><tr><th>#</th><th>SSID</th><th>PASSWORD</th></tr>";
+  String wifilist = "<body><div class='login'><div class='login-container'><h3 class='login-containerhead' style = 'text-align: center';>connected list</h3><table ><thead><tr><th>#</th><th>SSID</th><!--<th>PASSWORD</th>--></tr>";
    for(int i = 0;i < 4;i++){
       wifilist += "<tr><td>" ;
       wifilist += i + 1;
       wifilist += "</td><td><a >" ;
       wifilist += ssid_list[i];
-      wifilist += "</a></td><td>";
-      wifilist += password_list[i];
-      wifilist += "</a></td>";
+      wifilist += "</a></td><!--<td>-->";
+//      wifilist += password_list[i];
+//      wifilist += "</a></td>";
       wifilist += "</tr>";
    }
    wifilist += "</thead><tbody></tbody></table><br><br>";
    //scan wifi บริเวณรอบๆ
-   wifilist += "<h3 class='login-containerhead'>wireless network connection</h3><table ><thead><tr><th>#</th><th>SSID</th><th>quality</th></tr></thead><tbody>";
+   wifilist += "<h3 class='login-containerhead' style = 'text-align: center';>wireless network list</h3><table ><thead><tr><th>#</th><th>SSID</th><th>quality</th></tr></thead><tbody>";
 
   Serial.println("scan done");
   if (n == 0)
@@ -830,8 +830,8 @@ void setup() {
 
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-  //Wire.begin(5, 4);//New version
-  Wire.begin(); //Old version
+  Wire.begin(5, 4);//New version
+ // Wire.begin(); //Old version
 #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
   Fastwire::setup(400, true);
 #endif
@@ -1060,7 +1060,8 @@ void loop() {
 
           unsigned long timerAck = ((timer - preTime) / 1000);
           if ( timerAck >= 1) {
-
+            
+            send_json("HELPACK", "HELPACK");
             analogWrite(buzzer, 0);       // 0 turns it off
             state = 4;
           }
@@ -1082,12 +1083,11 @@ void loop() {
         if (buttonState == HIGH) {
 
         } else {
-          delay(50);
           ACK = 1; // Enable send massage to line every 30 sec
           state = 5;
         }
       } else if (state == 5) {
-        //send_json("CHECK", "อุปกรณ์: "+String(ALIAS)+" ได้รับการตอบรับแล้ว");
+        
         digitalWrite(green_led, HIGH);
         beep(60);
         digitalWrite(green_led, LOW);
