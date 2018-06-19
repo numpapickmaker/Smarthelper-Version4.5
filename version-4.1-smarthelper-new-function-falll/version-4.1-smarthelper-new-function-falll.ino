@@ -130,7 +130,9 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) { //
   } else if (stringOne.equals("ACK") && state == 2) {
     ACK = 0;
     send_json("DEVICEACK","DEVICEACK");
+    Serial.print("Incoming message Ending2-->");
   }
+  Serial.print("Incoming message Ending3-->");
 }
 
 void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
@@ -706,18 +708,20 @@ void send_json(String data, String MSG) {
   char JSONmessageBuffer[300];
   JSONencoder.prettyPrintTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
   Serial.println(JSONmessageBuffer);
-
+  Serial.println("JSONmessageBuffer"); 
   HTTPClient http;    //Declare object of class HTTPClient
-
+Serial.println("start http1"); 
   http.begin(host);      //Specify request destination
+  Serial.println("http.begin(host)"); 
   http.addHeader("Content-Type", "application/json");  //Specify content-type header
 
   int httpCode = http.POST(JSONmessageBuffer);   //Send the request
   String payload = http.getString();                                        //Get the response payload
 
   Serial.println(httpCode);   //Print HTTP return code
+  Serial.println("Code"); 
   Serial.println(payload);    //Print request response payload
-
+  Serial.println("Payload"); 
   http.end();  //Close connection
 }
 
@@ -861,7 +865,7 @@ void setup() {
   accelgyro.setDHPFMode(1);
   accelgyro.setFreefallDetectionThreshold(FreefallDetectionThreshold);
   accelgyro.setFreefallDetectionDuration(FreefallDetectionDuration);
-  checkSettingsMPU();//Serialport Debuging MPU6050 status
+  //checkSettingsMPU();//Serialport Debuging MPU6050 status
 
   //#####End initialize IMU MPU6050#####
 
@@ -976,7 +980,6 @@ void loop() {
       microgear.connect(APPID);
       microgear.loop();
     }
-
     if (microgear.connected())
     {
       microgear.loop();
@@ -1096,7 +1099,7 @@ void loop() {
         state = 0;
       }
 
-      read_battery_milsec(600000);
+      //read_battery_milsec(600000);
     }
   }
 }
